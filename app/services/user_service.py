@@ -1,8 +1,9 @@
 from typing import Optional
 from schemas.user_schema import UserAuth
 from models.user_model import User
-from core.security import get_password, verify_password
+from core.security import get_password, verify_password, encrypt, decrypt
 from uuid import UUID
+from core.security import settings
 
 class UserService:
     @staticmethod
@@ -10,7 +11,7 @@ class UserService:
         user_in = User(
             username=user.username,
             email=user.email,
-            password=get_password(user.password)
+            password=encrypt(user.password, settings.PASSWORD_ENCRYPTION_SECRET)
         )
         await user_in.save()
         return user_in
@@ -20,7 +21,7 @@ class UserService:
         user = await UserService.get_user_by_email(email=email)
         if not user:
             return None
-        if not verify_password(password=password, hashed_pass=user.password):
+        if not decrypt(password, user.password):
             return None
 
         return user
